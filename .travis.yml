@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t mboulon/react-test -f ./client/Dockerfile.dev ./client
+
+scripts:
+  - docker run -e CI=true mboulon/react-test npm test
+
+after_success:
+  - docker build -t mboulon/multi-client ./client
+  - docker build -t mboulon/multi-nginx ./nginx
+  - docker build -t mboulon/multi-server ./server
+  - docker build -t mboulon/multi-worker ./worker
+
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login  login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push mboulon/multi-client
+  - docker push mboulon/multi-nginx
+  - docker push mboulon/multi-server
+  - docker push mboulon/multi-worker
+
